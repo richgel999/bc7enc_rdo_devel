@@ -527,38 +527,39 @@ int main(int argc, char *argv[])
 	if (bc7_mode6_only)
 		bc7_pack_params.m_mode_mask = 1 << 6;
 
-	if ((dxgi_format == DXGI_FORMAT_BC7_UNORM) && (rdo_q > 0.0f))
+	if (bc7_reduce_entropy)
 	{
-		if (bc7_reduce_entropy)
+		// Slam off perceptual, for now, to simplify testing.
+		perceptual = false;
+		bc7_pack_params.m_perceptual = false;
+		bc7enc_compress_block_params_init_linear_weights(&bc7_pack_params);
+
+		bc7_pack_params.m_mode17_partition_estimation_filterbank = false;
+
+		if (has_alpha)
 		{
-			// Slam off perceptual, for now, to simplify testing.
-			perceptual = false;
-			bc7_pack_params.m_perceptual = false;
-			bc7enc_compress_block_params_init_linear_weights(&bc7_pack_params);
-
-			bc7_pack_params.m_mode17_partition_estimation_filterbank = false;
-
-			if (has_alpha)
-			{
-				bc7_pack_params.m_mode5_error_weight = .7f;
-				bc7_pack_params.m_mode6_error_weight = .6f;
-			}
-			else
-			{
-				bc7_pack_params.m_mode6_error_weight = .4f;
-			}
-
-			// Slightly prefer the lower frequency partition patterns.
-			bc7_pack_params.m_low_frequency_partition_weight = .9999f;
-
-			// As a good default, don't quantize mode 6 endpoints if the texture has alpha. This isn't required, but helps mask textures.
-			if (!has_alpha)
-				bc7_pack_params.m_quant_mode6_endpoints = true;
-
-			// Favor p-bit 0 vs. 1, to slightly lower the entropy of output blocks with p-bits
-			bc7_pack_params.m_pbit1_weight = 1.3f;
+			bc7_pack_params.m_mode5_error_weight = .7f;
+			bc7_pack_params.m_mode6_error_weight = .6f;
 		}
 		else
+		{
+			bc7_pack_params.m_mode6_error_weight = .4f;
+		}
+
+		// Slightly prefer the lower frequency partition patterns.
+		bc7_pack_params.m_low_frequency_partition_weight = .9999f;
+
+		// As a good default, don't quantize mode 6 endpoints if the texture has alpha. This isn't required, but helps mask textures.
+		if (!has_alpha)
+			bc7_pack_params.m_quant_mode6_endpoints = true;
+
+		// Favor p-bit 0 vs. 1, to slightly lower the entropy of output blocks with p-bits
+		bc7_pack_params.m_pbit1_weight = 1.3f;
+	}
+
+	if ((dxgi_format == DXGI_FORMAT_BC7_UNORM) && (rdo_q > 0.0f))
+	{
+		if (!bc7_reduce_entropy)
 		{
 			// Configure the BC7 encoder with some decent parameters for later RDO post-processing.
 			// Textures with alpha are harder for BC7 to handle, so we use more conservative defaults.
