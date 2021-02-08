@@ -3780,7 +3780,7 @@ bool bc7enc_reduce_entropy(
 			for (uint32_t len = 16; len >= 3; len--)
 			{
 				// Assume the block has 1 match and 16-match_len literals.
-				const float trial_bits = (sizeof(bc7_block) - len) * LITERAL_BITS + compute_match_cost_estimate(len, (block_index - prev_block_index) * 16);
+				const float trial_bits = (sizeof(bc7_block) - len) * LITERAL_BITS + compute_match_cost_estimate((block_index - prev_block_index) * 16, len);
 				const float trial_bits_times_lambda = trial_bits * params.m_lambda;
 								
 				for (uint32_t ofs = 0; ofs <= (sizeof(bc7_block) - len); ofs++)
