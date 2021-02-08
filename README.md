@@ -11,7 +11,7 @@ cmake .
 make
 ```
 
-To encode to RDO BC7 using the latest algorithm:
+To encode to RDO BC7 using the latest algorithm (using the Entropy Reduction Transform - or ERT):
 
 ```
 ./bc7enc -o -u4 -zc1024 blah.png -e -E -z1.0
