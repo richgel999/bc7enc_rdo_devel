@@ -23,6 +23,12 @@ To encode to RDO BC7 using the old (worse) algoritm:
 ./bc7enc -o -u4 -zc1024 blah.png -z1.0
 ```
 
+To encode to non-RDO BC7 using entropy reduced or quantized/weighted BC7 (super fast, slightly reduced quality, but 5-10% better LZ compression):
+
+```
+./bc7enc -o -u4 -zc1024 blah.png -e
+```
+
 To encode to BC1:
 ```
 ./bc7enc -1 blah.png
