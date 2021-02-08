@@ -1,6 +1,74 @@
-bc7enc - Fast, single source file BC1-5 and BC7/BPTC GPU texture encoders.
+bc7enc - Fast, single source file BC1-5 and BC7/BPTC GPU texture encoders with optional Rate Distortion Optimization (RDO) support.
+
+This repo is a work in progress. RDO BC1/4 is in and working well, but will be improved. BC7 RDO is in but I'm still actively working on how to do it. 
+
+Note I haven't compiled the latest code with clang/gcc yet, just MSVC 2019.
+
+To compile (tested MSVC 2019 x64):
+
+```
+cmake .
+make
+```
+
+To encode to RDO BC7 using the latest algorithm:
+
+```
+./bc7enc -o -u4 -zc1024 blah.png -e -E -z1.0
+```
+
+To encode to RDO BC7 using the old (worse) algoritm:
+
+```
+./bc7enc -o -u4 -zc1024 blah.png -z1.0
+```
+
+To encode to BC1:
+```
+./bc7enc -1 blah.png
+```
+
+To encode to BC1 with highest quality:
+```
+./bc7enc -L18 -1 blah.png
+```
+
+To encode to BC1 with Rate Distortion Optimization (RDO) using the default options at lambda=1.0:
+```
+./bc7enc -1 -z1.0 blah.png
+```
+
+The -z option controls lambda, or the rate vs. distortion tradeoff. 0 = maximum quality, higher values=lower bitrates but lower quality. Try values [.5-8].
+
+To encode to BC1 with RDO with RDO debug output, to monitor the percentage of blocks impacted:
+```
+./bc7enc -1 -z1.0 -zd blah.png
+```
+
+To encode to BC1 with RDO with a higher then default smooth block scale factor (which is 10.0):
+```
+./bc7enc -1 -z1.0 -zb20.0 blah.png
+```
+
+Use -zb1.0 to disable smooth block error scaling completely, which increases RDO performance but can result in noticeable artifacts on smooth/flat blocks at higher lambdas.
+
+To encode to BC1 with RDO at the highest achievable quality/effectiveness (this is noticeably slower):
+
+```
+./bc7enc -1 -z1.0 -zc32768 -L18 blah.png
+```
+
+This sets the BC1 encoder to level 18 (highest quality), the LZ dictionary size to 32KB (the highest setting that makes sense for Deflate). Dictionary sizes of 2KB (the default) to 8KB are way faster and in practice are almost as effective. The maximum dictionary setting supported by the command line tool is 64KB, but this would be very slow.
+
+RDO mode is also supported with BC4, using the -4 option. RDO BC3/5 (which are just variants of BC1/4) are coming next.
 
 Features:
+- Rate Distortion Optimization (RDO)
+
+Currently for BC1 and BC4. Currently implementing BC3/5 (which is easy).
+RDO is still a work in progress, but BC1/4 are working fairly well now.
+RDO BC7 is next.
+
 - BC1/3 encoder (in [rgbcx.h](https://github.com/richgel999/bc7enc/blob/master/rgbcx.h)) uses a new algorithm (which we've named "prioritized cluster fit") which is 3-4x faster than traditional cluster fit (as implemented in [libsquish](https://github.com/svn2github/libsquish) with SSE2) at the same or slightly higher average quality using scalar CPU instructions. This algorithm is suitable for GPU encoder implementations.
 
 The BC1/BC3 encoder also implements [Castano's optimal endpoint rounding improvement](https://gist.github.com/castano/c92c7626f288f9e99e158520b14a61cf).
@@ -10,12 +78,6 @@ rgbcx's BC1 encoder is faster than both AMD Compressonator and libsquish at the 
 - BC7 encoder (in bc7enc.c/.h) has perceptual colorspace metric support, and is very fast compared to ispc_texcomp (see below) for RGB textures. Important: The BC7 encoder included in this repo is still a work in progress. I took bc7enc16 and added more modes for better alpha support, but it needs more testing and development.
 
 - Full decoders for BC1-5/7. BC7 decoder is in bc7decomp.cpp/.h, BC1-5 decoders in rgbcx.h.
-
-This project is basically a demo of some of the techniques we use in Basis BC7,
-which is Binomial's state of the art vectorized BC7 encoder. Basis BC7 is the
-highest quality and fastest CPU BC7 encoder available (2-3x faster than
-ispc_texcomp). It supports all modes and linear/perceptual colorspace metrics.
-Licensees get full ISPC source code so they can customize the codec as needed.
 
 bc7enc currently only supports modes 1 and 6 for RGB, and modes 1, 5, 6, and 7 for alpha. The plan is to add all the modes. See the [bc7enc16](https://github.com/richgel999/bc7enc16) project for the previous version (which only supports modes 1 and 6). Note this readme still refers to "bc7enc16", but bc7enc is the same encoder but with more alpha modes.
 
