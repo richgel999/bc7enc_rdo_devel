@@ -3739,7 +3739,7 @@ bool bc7enc_reduce_entropy(
 			cur_err += dr * dr + dg * dg + db * db + da * da;
 		}
 
-		if (cur_err <= 1)
+		if (cur_err == 0)
 			continue;
 
 		const uint32_t bc7_mode = orig_blk.get_mode();
